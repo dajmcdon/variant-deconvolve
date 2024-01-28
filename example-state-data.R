@@ -2,9 +2,8 @@ library(tidyverse)
 ca_report <- read_rds("data/report_delay_ca_ga.rds") |>
   filter(state == "CA")
 vmix <- read_rds("data/variant_mix.rds") |>
-  filter(State == "CA") |>
-  rename(Ancestral = Other)
-v <- vmix |> select(Alpha:Ancestral) |> as.matrix()
+  filter(State == "CA")
+v <- vmix |> select(Alpha:Other) |> as.matrix()
 d <- 1:nrow(v) / (nrow(v) - 1)
 
 
@@ -74,6 +73,7 @@ tf <- function(x) {
   cc <- threshold(convolve(x, rev(inc), type = "o"))
   cc / sum(cc)
 }
+
 incubation_plus_reportdelay <- function(inc) {
   list(t(apply(report, 1, function(x) {
     cc <- threshold(convolve(x, rev(unlist(inc)), type = "o"))
@@ -91,11 +91,13 @@ probs <- apply(vmix_s, 2, function(x) list(x)) |>
 
 listy <- left_join(inc_convolved, probs)
 library(Matrix)
-make_cmat <- function(conv, p) { ## slightly wrong
+make_cmat <- function(conv, p) { ## correct??
   dims <- dim(conv)
+  conv <- conv[,dims[2]:1]
   ix <- rep(1:dims[1], times = dims[2])
   jx <- ix + rep(0:(dims[2] - 1), each = dims[1])
   Cmat <- sparseMatrix(i = ix, j = jx, x = c(conv))
+  Cmat <- t(Cmat[,-c(1:(dims[2] - 1))])
   list(drop0(p * Cmat))
 }
 
