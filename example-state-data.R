@@ -52,7 +52,7 @@ b2 <- 2.7^2 / 5.1
 dmsd <- mv_from_lognormal(1.25, 0.34)
 inc_pars <- tribble(
   ~Variant, ~Shape, ~Scale,
-  "Ancestral", 3.05, 1.95,
+  "Other", 3.05, 1.95,
   "Alpha", 4.94^2 / 2.19^2, 2.19^2 / 4.94,
   "Omicron", 3.03^2 / 1.33^2, 1.33^2 / 3.03,
   "Delta", dmsd[1]^2 / dmsd[2]^2, dmsd[2]^2 / dmsd[1],
@@ -97,7 +97,7 @@ make_cmat <- function(conv, p) { ## correct??
   ix <- rep(1:dims[1], times = dims[2])
   jx <- ix + rep(0:(dims[2] - 1), each = dims[1])
   Cmat <- sparseMatrix(i = ix, j = jx, x = c(conv))
-  Cmat <- t(Cmat[,-c(1:(dims[2] - 1))])
+  Cmat <- Cmat[,-c(1:(dims[2] - 1))]
   list(drop0(p * Cmat))
 }
 
