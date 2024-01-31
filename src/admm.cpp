@@ -62,8 +62,9 @@ void admm_gauss(int M,
   // Rcout << cDD.nonZeros() << "\n";
   // Rcout << cDD.sum() << "\n";
   
-
+  int niter = 0;
   for (int iter = 0; iter < M; iter++) {
+    niter++;
     if (iter % 1000 == 0) Rcpp::checkUserInterrupt();
     // solve for primal variable - theta:
     tmp_n = doDtv(z - u, korder, x) * rho;
@@ -89,6 +90,7 @@ void admm_gauss(int M,
     // auxiliary variables update:
     z_old = z;
   }
+  Rcout << niter << "\n";
 }
 
 
