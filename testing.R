@@ -15,5 +15,5 @@ t1 <- estim_path_single(y, x, cmat, 3, double(50), nsol = 50L, lambdamax = 10000
 plot(y, ty = "l")
 for (i in 1:30) {
   tt <- admm_testing(i, 3, y, x, cmat, 10000, 1, 1e-3)
-  lines(tt$z, col = i + 1)
+  lines(tt$theta, col = i + 1)
 }
