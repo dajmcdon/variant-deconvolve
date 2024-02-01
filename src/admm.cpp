@@ -46,10 +46,13 @@ void admm_gauss(int M,
   double s_norm = 0.0;
   int n = theta.size();
   double sqrtn = sqrt(n);
-  Eigen::VectorXd z_old = z;
+  Eigen::VectorXd z_old(n);
+  z_old.setZero();
+  z_old += z;
   int m = z.size();
   VectorXd Dth(m);
   VectorXd tmp_n(n);
+  VectorXd r(m);
   SparseMatrix<double> cDD = DD * rho + Cmat.transpose() * Cmat;
   
   // small ridge penalty?
@@ -64,23 +67,30 @@ void admm_gauss(int M,
   
   int niter = 0;
   for (int iter = 0; iter < M; iter++) {
+    // tmp_n.setZero();
+    // Dth.setZero();
+    // r.setZero();
     niter++;
     if (iter % 1000 == 0) Rcpp::checkUserInterrupt();
     // solve for primal variable - theta:
-    tmp_n = doDtv(z - u, korder, x) * rho;
+    tmp_n = doDtv(z + u, korder, x) * rho;
     tmp_n += Cty;
     
     theta = qradmm.solve(tmp_n);
     // solve for alternating variable - z:
     Dth = doDv(theta, korder, x);
-    Dth += u;
+    Dth -= u;
+    //z.setZero();
     z = dptf(Dth, lam_z);
     // update dual variable - u:
-    Dth -= z;
-    u += Dth;
+    u -= Dth;
+    u += z;
 
     // primal residuals:
-    r_norm = Dth.norm() / sqrtn;
+    // r.setZero();
+    r = doDv(theta, korder, x);
+    r -= z;
+    r_norm = r.norm() / sqrtn;
     // dual residuals:
     tmp_n = doDtv(z - z_old, korder, x);
     s_norm = rho * tmp_n.norm() / sqrtn;
@@ -89,8 +99,8 @@ void admm_gauss(int M,
 
     // auxiliary variables update:
     z_old = z;
+    // Rcout << "niter = " << niter << ", r_norm = " << r_norm << ", s_norm = " << s_norm << "\n";
   }
-  Rcout << niter << "\n";
 }
 
 
@@ -104,7 +114,7 @@ List admm_testing(int M,
                   double lam_z,
                   double tol) {
   Eigen::SparseMatrix<double> DkDk;
-  Eigen::SparseMatrix<double> Dk = get_Dtil(korder, x);
+  Eigen::SparseMatrix<double> Dk = get_Dtil(korder, x); 
   DkDk = Dk.transpose() * Dk;
   int mm = Dk.rows();
   int n = y.size();
