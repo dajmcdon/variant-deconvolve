@@ -51,6 +51,7 @@ void admm_gauss(int M,
   z_old += z;
   int m = z.size();
   VectorXd Dth(m);
+  VectorXd Dthu(m);
   VectorXd tmp_n(n);
   VectorXd r(m);
   SparseMatrix<double> cDD = DD * rho + Cmat.transpose() * Cmat;
@@ -79,9 +80,9 @@ void admm_gauss(int M,
     theta = qradmm.solve(tmp_n);
     // solve for alternating variable - z:
     Dth = doDv(theta, korder, x);
-    Dth -= u;
+    Dthu = Dth - u;
     //z.setZero();
-    z = dptf(Dth, lam_z);
+    z = dptf(Dthu, lam_z);
     // update dual variable - u:
     u -= Dth;
     u += z;
