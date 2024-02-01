@@ -26,7 +26,7 @@ report <- ca_report |>
   as.matrix()
 
 # period up to 2021-12-01
-ed <- which(vmix$Date == "2021-12-01")
+ed <- which(vmix$Date == "2023-03-01")
 report <- report[1:ed, ]
 vmix_s <- vmix_s[1:ed, ]
 

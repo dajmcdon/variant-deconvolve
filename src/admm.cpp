@@ -83,7 +83,9 @@ void admm_gauss(int M,
     //z.setZero();
     z = dptf(Dth, lam_z);
     // update dual variable - u:
-    u -= Dth;
+    tmp_n.setZero();
+    tmp_n = doDv(theta, korder, x);
+    u -= tmp_n;
     u += z;
 
     // primal residuals:
@@ -98,8 +100,11 @@ void admm_gauss(int M,
     if (r_norm < tol && s_norm < tol) break;
 
     // auxiliary variables update:
-    z_old = z;
-    // Rcout << "niter = " << niter << ", r_norm = " << r_norm << ", s_norm = " << s_norm << "\n";
+    z_old.setZero();
+    z_old += z;
+    if (iter % 50 == 0) {
+      Rcout << "niter = " << niter << ", r_norm = " << r_norm << ", s_norm = " << s_norm << "\n";
+    }
   }
 }
 
