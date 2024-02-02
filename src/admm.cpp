@@ -51,6 +51,7 @@ void admm_gauss(int M,
   z_old += z;
   int m = z.size();
   VectorXd Dth(m);
+  VectorXd Dthu(m);
   VectorXd tmp_n(n);
   VectorXd r(m);
   SparseMatrix<double> cDD = DD * rho + Cmat.transpose() * Cmat;
@@ -79,9 +80,9 @@ void admm_gauss(int M,
     theta = qradmm.solve(tmp_n);
     // solve for alternating variable - z:
     Dth = doDv(theta, korder, x);
-    Dth -= u;
+    Dthu = Dth - u;
     //z.setZero();
-    z = dptf(Dth, lam_z);
+    z = dptf(Dthu, lam_z);
     // update dual variable - u:
     tmp_n.setZero();
     tmp_n = doDv(theta, korder, x);
@@ -94,7 +95,10 @@ void admm_gauss(int M,
     r -= z;
     r_norm = r.norm() / sqrtn;
     // dual residuals:
-    tmp_n = doDtv(z - z_old, korder, x);
+    tmp_n.setZero();
+    z -= z_old;
+    tmp_n = doDtv(z, korder, x);
+    z += z_old;
     s_norm = rho * tmp_n.norm() / sqrtn;
     // stopping criteria check:
     if (r_norm < tol && s_norm < tol) break;
