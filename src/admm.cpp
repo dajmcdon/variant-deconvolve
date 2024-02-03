@@ -79,17 +79,16 @@ void admm_gauss(int M,
     theta = qradmm.solve(tmp_n);
     // solve for alternating variable - z:
     Dth = doDv(theta, korder, x);
-    Dth -= u;
+    //Dth -= u;
     //z.setZero();
-    z = dptf(Dth, lam_z);
+    z = dptf(Dth - u, lam_z);
     // update dual variable - u:
-    u -= Dth;
+    u -= Dth - z;
     u += z;
 
     // primal residuals:
     // r.setZero();
-    r = doDv(theta, korder, x);
-    r -= z;
+    r = Dth - z;
     r_norm = r.norm() / sqrtn;
     // dual residuals:
     tmp_n = doDtv(z - z_old, korder, x);
