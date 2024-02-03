@@ -1,14 +1,11 @@
 library(tidyverse)
 ca_report <- read_rds("data/report_delay_ca_ga.rds") |>
   filter(state == "CA")
-vmix <- read_rds("data/variant_mix.rds") |>
+vmix <- read_rds("data/seq_prop_df.rds") |>
   filter(State == "CA")
-v <- vmix |> select(Alpha:Other) |> as.matrix()
-d <- 1:nrow(v) / (nrow(v) - 1)
-
-
 # Here, my data is daily, not only the observations
-vmix_s <- fitted(nnet::multinom(v ~ poly(d, degree = 3)))
+vmix_s <- vmix |> select(Alpha:Other) |> as.matrix()
+
 plotter <- function(predmat) {
   as_tibble(predmat) |> 
     mutate(time = 1:nrow(predmat)) |>
@@ -26,7 +23,7 @@ report <- ca_report |>
   as.matrix()
 
 # period up to 2021-12-01
-ed <- which(vmix$Date == "2021-12-01")
+ed <- which(vmix$Date == "2023-03-01")
 report <- report[1:ed, ]
 vmix_s <- vmix_s[1:ed, ]
 
