@@ -112,24 +112,24 @@ void admm_gauss(int M,
     // auxiliary variables update:
     z_old.setZero();
     z_old += z;
-    if (iter % 50 == 0) {
+    // if (iter % 50 == 0) {
       // Rcout << "niter = " << niter << ", pri = " << pri << ", dual = " << dual << "\n";
-      Rcout << "niter = " << niter << ", r_norm = " << r_norm << "\n";
+      // Rcout << "niter = " << niter << ", r_norm = " << r_norm << "\n";
       // << ", s_norm = " << s_norm << "\n";
-    }
+    // }
   }
 }
 
 
 // [[Rcpp::export()]]
-List admm_testing(int M,
-                  int korder,
-                  Eigen::VectorXd y,
-                  NumericVector x,
-                  Eigen::SparseMatrix<double> Cmat,
-                  double rho,
-                  double lam_z,
-                  double tol) {
+List admm_test(int M,
+               int korder,
+               Eigen::VectorXd y,
+               NumericVector x,
+               Eigen::SparseMatrix<double> Cmat,
+               double rho,
+               double lam_z,
+               double tol) {
   Eigen::SparseMatrix<double> DkDk;
   Eigen::SparseMatrix<double> Dk = get_Dtil(korder, x); 
   DkDk = Dk.transpose() * Dk;

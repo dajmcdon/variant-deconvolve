@@ -4,7 +4,7 @@
 void backfitting(int korder,
                  Eigen::VectorXd y,
                  Rcpp::NumericVector x,
-                 Rcpp::List Cmats,
+                 Eigen::SparseMatrix<double> Cmats,
                  Eigen::MatrixXd thetas,
                  Eigen::MatrixXd zs,
                  Eigen::MatrixXd us,
@@ -14,5 +14,16 @@ void backfitting(int korder,
                  double tol,
                  int biters,
                  int admmiters);
+
+Rcpp::List backfitting_test(int korder,
+                            int ncomponents,
+                            Eigen::VectorXd y,
+                            Rcpp::NumericVector x,
+                            Eigen::SparseMatrix<double> Cmats,
+                            double rho,
+                            double lam_z,
+                            double tol,
+                            int biters,
+                            int admmiters);
 
 #endif

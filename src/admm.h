@@ -14,14 +14,14 @@ void admm_gauss(int M,
                 Eigen::SparseMatrix<double> DD,
                 double tol);
 
-Rcpp::List admm_testing(int M,
-                        int korder,
-                        Eigen::VectorXd y,
-                        Rcpp::NumericVector x,
-                        Eigen::SparseMatrix<double> Cmat,
-                        double rho,
-                        double lam_z,
-                        double tol);
+Rcpp::List admm_test(int M,
+                     int korder,
+                     Eigen::VectorXd y,
+                     Rcpp::NumericVector x,
+                     Eigen::SparseMatrix<double> Cmat,
+                     double rho,
+                     double lam_z,
+                     double tol);
   
 
 #endif

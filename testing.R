@@ -9,11 +9,12 @@ cmats <- params$Cmat
 cmat <- reduce(cmats, `+`)
 
 Rcpp::sourceCpp("src/estim_path.cpp")
-tt <- admm_testing(5000, 3, y, x, cmat, 1000, 1, 1e-3)
-t1 <- estim_path_single(y, x, cmat, 3, double(50), nsol = 50L, lambdamax = 10000)
+tt <- admm_test(5000, 3, y, x, cmat, 1000, 1, 1e-3)
+t1 <- estim_path_single(y, x, cmat, 3, double(10), nsol = 10L, lambdamax = 10000)
 
-plot(y, ty = "l")
-for (i in 1:30) {
-  tt <- admm_testing(i, 3, y, x, cmat, 10000, 1, 1e-3)
-  lines(tt$theta, col = i + 1)
-}
+
+# Backfitting -------------------------------------------------------------
+
+library(rlang)
+cc <- inject(cbind(!!!cmats)) # hard to pass list of mats to cpp
+t2 <- backfitting_test(3, length(cmats), y, x, cc, 1000, 1, 1e-3, 25, 200)

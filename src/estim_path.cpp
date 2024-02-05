@@ -19,30 +19,28 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 List estim_path_backfit(Eigen::VectorXd y,
-                NumericVector x,
-                List Cmats,
-                int korder,
-                NumericVector lambda,
-                double lambdamax = -1,
-                double lambdamin = -1,
-                int nsol = 100,
-                double rho = -1,
-                int maxadmm_iter = 1e3,
-                int maxbackfit_iter = 100,
-                double tolerance = 1e-3,
-                double lambda_min_ratio = 1e-4,
-                int verbose = 0) {
-  int ncomponents = Cmats.size();
-  Eigen::SparseMatrix<double> Cmat = Cmats[1];
-  int n = Cmat.cols();
-  int m = Cmat.rows();
+                        NumericVector x,
+                        Eigen::SparseMatrix<double> Cmats,
+                        int korder,
+                        NumericVector lambda,
+                        double lambdamax = -1,
+                        double lambdamin = -1,
+                        int nsol = 100,
+                        double rho = -1,
+                        int maxadmm_iter = 1e3,
+                        int maxbackfit_iter = 100,
+                        double tolerance = 1e-3,
+                        double lambda_min_ratio = 1e-4,
+                        int verbose = 0) {
+  int n = y.size();
+  int m = Cmats.rows();
+  int ncomponents = Cmats.cols() / m;
   
   if (korder < 1) stop("korder must be at least 1.");
 
   // Placeholders for solutions
   Eigen::MatrixXd thetas(m, ncomponents);
   List all_thetas(nsol);
-  for (int i = 0; i < nsol; i++) all_thetas[i] = thetas;
   NumericVector niter(nsol);
 
   // Build D matrices as needed
@@ -59,9 +57,10 @@ List estim_path_backfit(Eigen::VectorXd y,
 
   // Generate lambda sequence if necessary
   if (abs(lambda[nsol - 1]) < tolerance / 100 && lambdamax <= 0) {
-    Eigen::SparseMatrix<double> Cmat_sum;
+    Eigen::SparseMatrix<double> Cmat_sum(m, m);
+    Eigen::SparseMatrix<double> Cmat;
     for (int i = 0; i < ncomponents; i++) {
-      Eigen::SparseMatrix<double> Cmat = Cmats[i];
+      Cmat = Cmats.middleCols(m * i, m);
       Cmat_sum += Cmat.transpose() * Cmat;
     }
     VectorXd b(n - korder);
