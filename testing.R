@@ -17,4 +17,4 @@ t1 <- estim_path_single(y, x, cmat, 3, double(10), nsol = 10L, lambdamax = 10000
 
 library(rlang)
 cc <- inject(cbind(!!!cmats)) # hard to pass list of mats to cpp
-t2 <- backfitting_test(3, length(cmats), y, x, cc, 1000, 1, 1e-3, 25, 200)
+t2 <- backfitting_test(3, length(cmats), y, x, cc, 10000, 1, 1e-3, 5, 200)

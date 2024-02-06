@@ -56,10 +56,10 @@ void admm_gauss(int M,
   VectorXd r(m);
   SparseMatrix<double> cDD = DD * rho + Cmat.transpose() * Cmat;
   
-  // small ridge penalty?
-  // for (int i = 0; i < n; i++) {
-  //   cDD.diagonal()(i) += .001;
-  // }
+  // small ridge penalty
+  for (int i = 0; i < n; i++) {
+    cDD.diagonal()(i) += .001;
+  }
   Eigen::VectorXd Cty = Cmat.transpose() * y;
   qradmm.compute(cDD);
   
@@ -78,6 +78,7 @@ void admm_gauss(int M,
     tmp_n += Cty;
     
     theta = qradmm.solve(tmp_n);
+    for (int i = 0; i < n; i++) theta(i) = theta(i) > 0 ? theta(i) : 0;
     // solve for alternating variable - z:
     Dth = doDv(theta, korder, x);
     Dthu = Dth - u;
