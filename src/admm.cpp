@@ -46,9 +46,8 @@ void admm_gauss(int M,
   double s_norm = 0.0;
   int n = theta.size();
   double sqrtn = sqrt(n);
-  Eigen::VectorXd z_old(n);
-  z_old.setZero();
-  z_old += z;
+  Eigen::VectorXd z_old = z;
+  
   int m = z.size();
   VectorXd Dth(m);
   VectorXd Dthu(m);
@@ -68,9 +67,6 @@ void admm_gauss(int M,
   
   int niter = 0;
   for (int iter = 0; iter < M; iter++) {
-    // tmp_n.setZero();
-    // Dth.setZero();
-    // r.setZero();
     niter++;
     if (iter % 1000 == 0) Rcpp::checkUserInterrupt();
     // solve for primal variable - theta:
@@ -85,13 +81,12 @@ void admm_gauss(int M,
     //z.setZero();
     z = dptf(Dthu, lam_z);
     // update dual variable - u:
-    tmp_n.setZero();
+    // tmp_n.setZero();
     tmp_n = doDv(theta, korder, x);
     u -= tmp_n;
     u += z;
 
     // primal residuals:
-    // r.setZero();
     r = Dth - z;
     r_norm = r.norm();
     // The below seems nearly right, but decays oddly
@@ -111,7 +106,6 @@ void admm_gauss(int M,
     // if (r_norm < pri && s_norm < dual) break;
     if (r_norm < tol * sqrtn) break;
     // auxiliary variables update:
-    z_old.setZero();
     z_old += z;
     // if (iter % 50 == 0) {
       // Rcout << "niter = " << niter << ", pri = " << pri << ", dual = " << dual << "\n";
