@@ -1,0 +1,120 @@
+---
+title: "Backfitting Optimization"
+format: pdf
+editor: source
+---
+
+Let $y_t$ be the observed cases at time $t$, and $x_t$ be the time
+index. We have a set of convolution matrices $C_1, \ldots, C_K$, 
+$k = 1,\ldots,K$
+such that each corresponds to a different variant. These have the
+property that $C_1 + \cdots + C_K$. Each row of $C_k$ is a
+convolution of 
+the $t$-specific reporting delay (common across variants), with
+a variant-specific infection-symptom delay (common across time). 
+Finally, we multiply each row by the variant-specific circulation 
+proportion (smoothed) associated to that variant.
+
+The problem is to estimate the variant-specific deconvolved cases
+simultaneously using trend filtering. We write this as:
+
+$$
+\min_{\theta_1, \ldots, \theta_K} \frac{1}{2}\|y - 
+\sum_{k=1}^K C_k \theta_k\|_2^2 + \lambda \sum_{k=1}^K \|D^{(4)}\theta_k\|_1.
+$$
+
+There is also a constraint that $\theta_{tk} \geq 0$ for all $k$.
+
+Coupled with a small ridge penalty, the current backfitting code
+gives Figure 1 with $\lambda = 10^{4}$ which is somewhat smooth. This was 25 backfitting iterates with 200 ADMM iterates per-variant per backfitting pass.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-align: center
+#| fig-cap: "Deconvolved cases for California (backfitting)"
+library(tidyverse)
+thetas <- read_rds("data/backfit-example.rds")
+thetas <- thetas$thetas
+cases <- read_rds("data/deconvolved_ca_ga.rds") |>
+  filter(time_value <= ymd("2023-03-01"), geo_value == "ca")
+colnames(thetas) <- names(read_rds("data/seq_prop_df.rds"))[-c(1, 2)]
+x <- cases$time_value
+y <- cases$cases
+thetas <- thetas |>
+  # apply(1, cumsum) |>
+  # t() |>
+  as_tibble() |> 
+  mutate(time_value = x) |>
+  pivot_longer(-time_value, names_to = "variant", values_to = "deconv_cases")
+ggplot(thetas, aes(x = time_value)) + 
+  geom_area(
+    aes(y = deconv_cases, fill = variant)) + 
+  scale_fill_brewer(palette = "Set1", name = "") +
+  theme_bw() +
+  xlab("Date") + ylab("Deconvolved cases") +
+  geom_line(data = cases, aes(y = cases), color = "black", linewidth = 1) +
+  scale_x_date() +
+  scale_y_continuous(expand = expansion(0))
+```
+
+The problems here seem to be:
+
+1. The ordering of the variants is alphabetical, but this bungles the backfitting.
+2. Total cases is `r signif(sum(y),3)` compared to `r signif(sum(read_rds("data/backfit-example.rds")$thetas),3)` for deconvolved cases.
+3. The nonnegativity constraint forces some weird behavior, though might disappear with a fix for the ordering.
+
+The current ADMM steps (single variant) are:
+
+1. Solve the Least Squares problem for $\theta_k$ using a QR (+small ridge penalty).
+2. Hard threshold the solution to nonnegativity.
+3. Use the DP.
+4. Update the dual variable.
+
+
+Redoing the figure simply multiplying deconvolved cases by the proportion of the
+variant in circulation gives Figure 2. 
+
+```{r}
+#| echo: false
+#| fig-align: center
+#| fig-cap: "Deconvolved cases for California (easy way)"
+old_stuff <- read_rds("data/deconvolved_ca_ga.rds") |>
+  filter(time_value <= ymd("2023-03-01"), geo_value == "ca")
+vmix <- read_rds("data/seq_prop_df.rds") |>
+  filter(State == "CA") |>
+  select(time_value = Date, Alpha:Other)
+
+thetas <- old_stuff |>
+  left_join(vmix, by = "time_value") |>
+  mutate(across(Alpha:Other, ~.x * infections)) |>
+  select(time_value, Alpha:Other) |>
+  pivot_longer(-time_value, names_to = "variant", values_to = "deconv_cases")
+ggplot(thetas, aes(x = time_value)) + 
+  geom_area(
+    aes(y = deconv_cases, fill = variant)) + 
+  scale_fill_brewer(palette = "Set1", name = "") +
+  theme_bw() +
+  xlab("Date") + ylab("Deconvolved cases") +
+  geom_line(data = cases, aes(y = cases), color = "black", linewidth = 1) +
+  scale_x_date() +
+  scale_y_continuous(expand = expansion(0))
+```
+
+And Figure 3 is the same as Figure 2, but zoomed in to our period
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+ggplot(thetas, aes(x = time_value)) + 
+  geom_area(
+    aes(y = deconv_cases, fill = variant)) + 
+  scale_fill_brewer(palette = "Set1", name = "") +
+  theme_bw() +
+  xlab("Date") + ylab("Deconvolved cases") +
+  geom_line(data = cases, aes(y = cases), color = "black", linewidth = 1) +
+  scale_x_date(limits = ymd(c(NA, "2021-12-01")), expand = expansion(0)) +
+  scale_y_continuous(expand = expansion(0), limits = c(0, 50000))
+```
