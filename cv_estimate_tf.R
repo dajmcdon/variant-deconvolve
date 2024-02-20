@@ -1,6 +1,5 @@
 #' Leave-kth-out cross validation for choosing a optimal parameter lambda
 #'
-#' @inheritParams estim_path_single() #%% This is C++ function, how to inherit parameters from C++ and not R function?
 #' @param nfold Integer. This number of folds to conduct the leave-kth-out
 #' cross validation. For leave-kth-out cross validation, every kth
 #' observed_counts and their corresponding position (evenly or unevenly
@@ -43,6 +42,22 @@
 #' y <- c(1, rnorm(100, dnorm(1:100, 50, 15) * 500 + 1))
 #' cv <- cv_estimate_tf(y, korder = 3, nfold = 3, nsol = 30)
 #' cv
+#' 
+#' params <- read_rds("data/ca-convolution-mat.rds")
+#' y <- read_rds("data/deconvolved_ca_ga.rds") |>
+#' filter(time_value <= ymd("2023-03-01"), geo_value == "ca") |>
+#'   pull(cases)
+#' cmats <- params$Cmat
+#' cmat <- reduce(cmats, `+`)
+#'
+#' res <- cv_estimate_tf(y, 
+#'                cmat = cmat,
+#'                error_measure = "mse")
+#' # Plot of the thetas for all lambdas
+#' matplot(res$full_fit$thetas, type = "l")
+#' # Plot line for lambda_min
+#' matplot(res$full_fit$thetas[, which(res$lambda == res$lambda.min)], type = "l")
+#' 
 cv_estimate_tf <- function(
     observed_counts,
     x = 1:n,
@@ -68,14 +83,7 @@ cv_estimate_tf <- function(
   ## Run program one time to create lambda 
   Rcpp::sourceCpp("src/estim_path.cpp") #%% Remove this line & just depend on this file later on 
   
-  #%% Compute lambda_max manually - not convinced this is done correctly in estim_path_single()
-  if(lambda_max == -1){
-    D = d_mat((korder+1), 1:n)
-    
-    lambda_max = max(abs(solve(D %*% t(D)) %*% D %*% t(cmat) %*% y))
-  }
-  
-  full_fit = estim_path_single(observed_counts, x, cmat, korder = 3, lambda = lambda, nsol = length(lambda), lambdamax = -1, maxadmm_iter = maxiter) 
+  full_fit = estim_path_single(observed_counts, x, cmat, korder = 3, lambda = lambda, nsol = length(lambda), lambdamax = lambda_max, maxadmm_iter = maxiter) 
   
   if (is.null(lambda)) lambda <- full_fit$lambda 
   
@@ -142,18 +150,18 @@ cv_estimate_tf <- function(
 
 # Test using CA data:
 
-params <- read_rds("data/ca-convolution-mat.rds")
-y <- read_rds("data/deconvolved_ca_ga.rds") |>
-  filter(time_value <= ymd("2023-03-01"), geo_value == "ca") |>
-  pull(cases)
-x <- seq_along(y)
-cmats <- params$Cmat
-cmat <- reduce(cmats, `+`)
+# params <- read_rds("data/ca-convolution-mat.rds")
+# y <- read_rds("data/deconvolved_ca_ga.rds") |>
+#  filter(time_value <= ymd("2023-03-01"), geo_value == "ca") |>
+#  pull(cases)
+# x <- seq_along(y)
+# cmats <- params$Cmat
+# cmat <- reduce(cmats, `+`)
 
-res <- cv_estimate_tf(y, 
-               cmat = cmat,
-               error_measure = "mse")
+# res <- cv_estimate_tf(y, 
+#               cmat = cmat,
+#               error_measure = "mse")
 # Plot of the thetas for all lambdas
-matplot(res$full_fit$thetas, type = "l")
+# matplot(res$full_fit$thetas, type = "l")
 # Plot line for lambda_min
-matplot(res$full_fit$thetas[,which(res$lambda == res$lambda.min)], type = "l")
+# matplot(res$full_fit$thetas[,which(res$lambda == res$lambda.min)], type = "l")

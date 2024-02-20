@@ -148,7 +148,7 @@ List estim_path_single(Eigen::VectorXd y,
   // Generate lambda sequence if necessary
   if (abs(lambda[nsol - 1]) < tolerance / 100 && lambdamax <= 0) {
     VectorXd b(n - korder);
-    VectorXd Cy = Cmat * y;
+    VectorXd Cy = Cmat.transpose() * y;
     b = qr.solve(Cy);
     NumericVector bp = evec_to_nvec(b);
     lambdamax = max(abs(bp));
