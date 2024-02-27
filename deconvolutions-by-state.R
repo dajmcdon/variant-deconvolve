@@ -48,7 +48,7 @@ make_cmat <- function(conv, daysbefore = 0) {
   jx <- ix + rep(0:(dims[2] - 1), each = dims[1])
   Cmat <- sparseMatrix(i = ix, j = jx, x = c(conv))
   Cmat <- Cmat[,-c(1:(dims[2] - 1 - daysbefore))]
-  Cmat <- Cmat[,1:(ncol(Cmat) - daysbefore)] #%%
+  Cmat <- Cmat[,1:(ncol(Cmat) - daysbefore)] 
   list(drop0(Cmat)) 
 }
 
@@ -139,7 +139,7 @@ for(state in state.abb){
   # variant-specific delays
   
   max_inc_days <- 21
-  support <- 0:max_inc_days #%% Start at 0 with prob = 0
+  support <- 0:max_inc_days # Start at 0 with prob = 0
   
   inc_delays <- inc_pars |>
     mutate(delay = discretize_gamma(support, Shape, Scale))
@@ -155,7 +155,7 @@ for(state in state.abb){
   listy <- left_join(inc_convolved, probs)
   
   listy <- listy |>
-    mutate(Cmat = make_cmat(convolved, daysbefore = daysbefore)) #%% Make sure dimensions of this are slightly larger if using daysbefore parameter (so Cmat and probs in listy results are the same dim)
+    mutate(Cmat = make_cmat(convolved, daysbefore = daysbefore)) 
   
   setwd(paste0("data/", state)) # Where the results and plots are to be saved for the state
   write_rds(listy, "convolution-mat-list.rds")
@@ -202,7 +202,7 @@ for(state in state.abb){
   names(final_thetas_op_list) <- inc_pars$Variant
   for(var in inc_pars$Variant){
     cmat_var = params[params$Variant == var,]$Cmat[[1]]
-    y_var = final_thetas_pr * probs[probs$Variant == var, ]$probs[[1]] #%% final_thetas_pr, 
+    y_var = final_thetas_pr * probs[probs$Variant == var, ]$probs[[1]] 
     
     # Checks that dimensions of y_var and cmat are reasonable
     if(nrow(cmat_var) != ncol(cmat_var)) cli::cli_abort("`cmat` is not square. Check the dimensions.")
@@ -229,8 +229,10 @@ for(state in state.abb){
   write_rds(final_thetas_op_df_state, "final-thetas-df.rds")
   
   # Produce plot of all infections by variant
-  ggplot(final_thetas_op_df_state, aes(time_value, infect, colour=variant)) +
-    geom_line()
+  ggplot(final_thetas_op_df_state, aes(time_value, infect, fill = variant)) +
+    geom_area(position = "stack") + 
+    xlab("time") + 
+    ylab("infections")
   ggsave(filename = paste0(state, "infect_by_variant.png"))
 }
 # sum(final_thetas_op_df$infect) # too large compared to other two 12,000,000 --> 18,000,000
