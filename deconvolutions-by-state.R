@@ -9,6 +9,9 @@ pd <- import("pandas")
 start_date = as.Date("2020-03-01") 
 end_date =  as.Date("2023-03-01") 
 
+restricted_start_date = as.Date("2020-06-01") 
+restricted_end_date =  as.Date("2021-11-29") 
+
 # For op (number of days for negative delays)
 daysbefore = 7
 
@@ -237,7 +240,7 @@ for(state in state.abb){
   ggsave(filename = paste0(state, "infect_by_variant.png"))
   
   # Plot of infections by variant within designated start and end dates (2020-06-01 and 2021-11-29)
-  final_thetas_op_df_state_sub = final_thetas_op_df_state %>% filter(time_value <= end_date & time_value >= start_date) 
+  final_thetas_op_df_state_sub = final_thetas_op_df_state %>% filter(time_value <= restricted_end_date & time_value >= restricted_start_date) 
   
   ggplot(final_thetas_op_df_state_sub, aes(time_value, infect, fill = variant)) +
     geom_area(position = "stack") + 
