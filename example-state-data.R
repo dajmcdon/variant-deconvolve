@@ -88,13 +88,13 @@ probs <- apply(vmix_s, 2, function(x) list(x)) |>
 
 listy <- left_join(inc_convolved, probs)
 library(Matrix)
-make_cmat <- function(conv, p) { ## correct??
+make_cmat <- function(conv, p, daysbefore = 0) { 
   dims <- dim(conv)
   conv <- conv[,dims[2]:1]
   ix <- rep(1:dims[1], times = dims[2])
   jx <- ix + rep(0:(dims[2] - 1), each = dims[1])
   Cmat <- sparseMatrix(i = ix, j = jx, x = c(conv))
-  Cmat <- Cmat[,-c(1:(dims[2] - 1))]
+  Cmat <- Cmat[,-c(1:(dims[2] - 1 - daysbefore))]
   list(drop0(p * Cmat))
 }
 
