@@ -231,9 +231,20 @@ for(state in state.abb){
   # Produce plot of all infections by variant
   ggplot(final_thetas_op_df_state, aes(time_value, infect, fill = variant)) +
     geom_area(position = "stack") + 
-    xlab("time") + 
-    ylab("infections")
+    xlab("Time") + 
+    ylab("Infections") + 
+    scale_fill_discrete(name = "Variant")
   ggsave(filename = paste0(state, "infect_by_variant.png"))
+  
+  # Plot of infections by variant within designated start and end dates (2020-06-01 and 2021-11-29)
+  final_thetas_op_df_state_sub = final_thetas_op_df_state %>% filter(time_value <= end_date & time_value >= start_date) 
+  
+  ggplot(final_thetas_op_df_state_sub, aes(time_value, infect, fill = variant)) +
+    geom_area(position = "stack") + 
+    xlab("Time") + 
+    ylab("Infections") + 
+    scale_fill_discrete(name = "Variant")
+  ggsave(filename = paste0(state, "infect_by_variant_end_", end_date, ".png"))
 }
 # sum(final_thetas_op_df$infect) # too large compared to other two 12,000,000 --> 18,000,000
 # sum(final_thetas_pr)
