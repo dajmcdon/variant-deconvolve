@@ -13,7 +13,7 @@ restricted_start_date = as.Date("2020-06-01")
 restricted_end_date =  as.Date("2021-11-29") 
 
 # For op (number of days for negative delays)
-daysbefore = 7
+daysbefore = 7 #%%
 
 ##############################################################################################################################################
 # Create folders for each state's results in data folder
