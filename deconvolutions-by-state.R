@@ -13,7 +13,13 @@ restricted_start_date = as.Date("2020-06-01")
 restricted_end_date =  as.Date("2021-11-29") 
 
 # For op (number of days for negative delays)
-daysbefore = 7 #%%
+daysbefore = 3 #%%
+
+# Run results for ablation?
+# Meaning save resutls from 
+# 1. Report —> positive specimen using JHU cases (final_thetas_pr)
+# 2. Instead of adding in positive specimen to infection onset do positive specimen —> symptom onset (ie. no incubation period) (final_thetas_sp_df_state)
+ablation = TRUE
 
 ##############################################################################################################################################
 # Create folders for each state's results in data folder
@@ -87,7 +93,7 @@ tf <- function(x) {
   cc / sum(cc)
 }
 
-incubation_plus_reportdelay <- function(inc) {
+incubation_plus_reportdelay <- function(inc, report) {
   list(t(apply(report, 1, function(x) {
     cc <- threshold(convolve(x, rev(unlist(inc)), type = "o"))
     cc / sum(cc)
@@ -149,7 +155,7 @@ for(state in state.abb){
   
   inc_convolved <- inc_delays |> 
     rowwise() |>
-    mutate(convolved = incubation_plus_reportdelay(delay))
+    mutate(convolved = incubation_plus_reportdelay(delay, report))
   
   probs <- apply(vmix_s, 2, function(x) list(x)) |> 
     as_tibble() |> 
@@ -158,7 +164,8 @@ for(state in state.abb){
   listy <- left_join(inc_convolved, probs)
   
   listy <- listy |>
-    mutate(Cmat = make_cmat(convolved, daysbefore = daysbefore)) 
+    mutate(Cmat = make_cmat(convolved, daysbefore = daysbefore),
+           Cmat_ps = make_cmat(report, daysbefore = daysbefore)) #%%
   
   setwd(paste0("data/", state)) # Where the results and plots are to be saved for the state
   write_rds(listy, "convolution-mat-list.rds")
@@ -168,7 +175,7 @@ for(state in state.abb){
   # Deconvolutions
   setwd(paste0("/Users/admin/Downloads/naive_delay_dist/data/naive_delay_distributions/", state))
   
-  # Positive specimen to report date
+  # 1. Positive specimen to report date
   state_pr_list <- pd$read_pickle(paste0(state, "_Empshrink_delay_distribution_d60c_feb8_pr.p"))
   state_pr_mat <- do.call(rbind, state_pr_list) # matrix and bind rows so 1096 x 61 or 82
   
@@ -193,12 +200,49 @@ for(state in state.abb){
   for(var in inc_pars$Variant){
     if(length(final_thetas_pr) != length(probs[probs$Variant == var, ]$probs[[1]])) cli::cli_warn(paste0("Length of `final_thetas_pr` is not the same as the variant probabilities for a variant ", var)) 
   }
-  
+  # For Ablation
+  if(ablation == TRUE){
+    setwd(paste0("data/", state)) # Where the results and plots are to be saved for the state
+    # 1. Report —> positive specimen using JHU cases 
+    write_rds(final_thetas_pr, "final-thetas-pr.rds")
+    
+    
+    
+    
+    # 2. Symptom onset to positive specimen date
+    # By variant
+    params <- read_rds("convolution-mat-list.rds")
+    
+    final_thetas_sp_list = vector(mode = "list", length = length(params$Variant))
+    names(final_thetas_sp_list) <- params$Variant
+    for(var in params$Variant){
+      cmat_var = params[params$Variant == var,]$Cmat_ps[[1]]
+      y_var = final_thetas_pr * probs[probs$Variant == var, ]$probs[[1]] 
+      
+      # Checks that dimensions of y_var and cmat are reasonable
+      if(nrow(cmat_var) != ncol(cmat_var)) cli::cli_abort("`cmat` is not square. Check the dimensions.")
+      if(nrow(cmat_var) != length(y_var)) cli::cli_abort("Nrow of `cmat` is not the same as the length of `y_var`. Check the dimensions and dates used of each.")
+      if(ncol(cmat_var) != length(y_var)) cli::cli_abort("Ncol of `cmat` is not the same as the length of `y_var`. Check the dimensions and dates used of each.")
+      
+      # CV estimate using tf 
+      setwd("/Users/admin/Downloads/variant-deconvolve/")
+      res_sp <- cv_estimate_tf(y_var, 
+                               cmat = cmat_var,
+                               error_measure = "mse")
+      
+      final_thetas_sp = res_sp$full_fit$thetas[,which(res_sp$lambda == res_sp$lambda.min)]
+      final_thetas_sp_list[[var]] = data.frame(time_value = seq(start_date, end_date, by = "day"), geo_value = state, infect = final_thetas_sp)
+    }
+    final_thetas_sp_df_state = bind_rows(final_thetas_sp_list, .id="variant")
+    
+    setwd(paste0("data/", state)) # Where the results and plots are to be saved for the state
+    write_rds(final_thetas_sp_df_state, "final-thetas-sp-df.rds")
+  }
+
   
   
   # Infection onset to positive specimen date
   # Load convolution data and Cmat by variant
-  setwd(paste0("data/", state)) # Where the results and plots are to be saved for the state
   params <- read_rds("convolution-mat-list.rds")
   
   final_thetas_op_list = vector(mode = "list", length = length(inc_pars$Variant))

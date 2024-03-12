@@ -34,7 +34,7 @@ List estim_path_backfit(Eigen::VectorXd y,
                         int verbose = 0) {
   int n = y.size();
   int m = Cmats.rows();
-  int ncomponents = Cmats.cols() / m;
+  int ncomponents = Cmats.cols() / m; // This should give 8768/1096 = 8 in the example in testing
   
   if (korder < 1) stop("korder must be at least 1.");
 
@@ -57,11 +57,11 @@ List estim_path_backfit(Eigen::VectorXd y,
 
   // Generate lambda sequence if necessary
   if (abs(lambda[nsol - 1]) < tolerance / 100 && lambdamax <= 0) {
-    Eigen::SparseMatrix<double> Cmat_sum(m, m);
+    Eigen::SparseMatrix<double> Cmat_sum(m, m); // Should this be n not m beause we want Cmat_sum(1096, 1096) and m is 8768?
     Eigen::SparseMatrix<double> Cmat;
     for (int i = 0; i < ncomponents; i++) {
-      Cmat = Cmats.middleCols(m * i, m);
-      Cmat_sum += Cmat.transpose() * Cmat;
+      Cmat = Cmats.middleCols(m * i, m); // Ex. when i = 0, Cmats.middleCols(m * i, m); = Cmats.middleCols(0, 1096). i = 1: Cmats.middleCols(m * i, m); = Cmats.middleCols(1096, 1096).
+      Cmat_sum += Cmat.transpose() * Cmat; // i = 2: Cmats.middleCols(m * i, m); = Cmats.middleCols(2192, 1096). Block containing the q columns starting from i *	matrix.middleCols(i,q);
     }
     VectorXd b(n - korder);
     VectorXd Cy = Cmat_sum * y;
@@ -78,8 +78,8 @@ List estim_path_backfit(Eigen::VectorXd y,
   Eigen::MatrixXd beta(m, ncomponents);
   Eigen::MatrixXd alpha(mm, ncomponents);
   Eigen::MatrixXd u(mm, ncomponents);
-  int iters = 0;
-  int nsols = nsol;
+  //int iters = 0;
+  // int nsols = nsol;
 
   // Outer loop to compute solution path
   for (int i = 0; i < nsol; i++) {
@@ -125,7 +125,7 @@ List estim_path_single(Eigen::VectorXd y,
                        double lambda_min_ratio = 1e-8,
                        int verbose = 0) {
   int n = Cmat.cols();
-  int m = Cmat.rows();
+  //int m = Cmat.rows();
   
   if (korder < 1) stop("korder must be at least 1.");
   
@@ -166,8 +166,8 @@ List estim_path_single(Eigen::VectorXd y,
   alpha.setZero();
   u.setZero();
   
-  int iters = 0;
-  int nsols = nsol;
+  // int iters = 0;
+  // int nsols = nsol;
   
   // Outer loop to compute solution path
   for (int i = 0; i < nsol; i++) {
