@@ -16,7 +16,7 @@ restricted_end_date =  as.Date("2021-11-29")
 daysbefore = 3 #%%
 
 # Run results for ablation?
-# Meaning save resutls from 
+# Meaning save results from 
 # 1. Report —> positive specimen using JHU cases (final_thetas_pr)
 # 2. Instead of adding in positive specimen to infection onset do positive specimen —> symptom onset (ie. no incubation period) (final_thetas_sp_df_state)
 ablation = TRUE
